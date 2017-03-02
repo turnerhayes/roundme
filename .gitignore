@@ -1,0 +1,17 @@
+# NPM modules
+node_modules
+
+# Generated static content
+client/dist
+
+# Sublime Text project files
+*.sublime-project
+*.sublime-workspace
+
+# SSL keys/certs
+/*.crt
+/*.csr
+/*.key
+
+# Environment variable settings
+.env
