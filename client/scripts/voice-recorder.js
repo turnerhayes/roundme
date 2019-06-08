@@ -1,5 +1,7 @@
 import Promise from "bluebird";
 import EventEmitter from "events";
+import RecorderJS from "recorderjs";
+import audioContext from "./audio-context";
 
 const GET_USER_MEDIA_PROMISE = new Promise(
 	(resolve, reject) => {
@@ -12,12 +14,6 @@ const GET_USER_MEDIA_PROMISE = new Promise(
 		);
 	}
 );
-
-const MIME_TYPE = ["audio/wav", "audio/webm"].find(MediaRecorder.isTypeSupported);
-
-if (MIME_TYPE === void 0) {
-	throw new Error("No known audio MIME type is supported by this media recorder");
-}
 
 function _handleStart(voiceRecorder) {
 	voiceRecorder.isRecording = true;
@@ -33,25 +29,9 @@ export default class VoiceRecorder extends EventEmitter {
 	constructor() {
 		super();
 
-		this.blobs = [];
-
 		this.recorderPromise = GET_USER_MEDIA_PROMISE.then(
 			stream => {
-				const recorder = new MediaRecorder(stream, {
-					"mimeType": MIME_TYPE
-				});
-				recorder.ignoreMutedMedia = true;
-				recorder.ondataavailable = blob => {
-					this.blobs.push(blob);
-				};
-
-				recorder.onstop = recorder.onpause = () => {
-					_handleStop(this);
-				};
-
-				recorder.onstart = recorder.onresume = () => {
-					_handleStart(this);
-				};
+				const recorder = new RecorderJS(audioContext.createMediaStreamSource(stream));
 
 				return recorder;
 			}
@@ -61,7 +41,8 @@ export default class VoiceRecorder extends EventEmitter {
 	start = () => {
 		this.recorderPromise.then(
 			recorder => {
-				recorder.start();
+				recorder.record();
+				_handleStart(this);
 			}
 		);
 	}
@@ -70,9 +51,22 @@ export default class VoiceRecorder extends EventEmitter {
 		this.recorderPromise.then(
 			recorder => {
 				recorder.stop();
+				_handleStop(this);
 			}
 		);
 	}
 
-	getBlob = () => new Blob(this.blobs, { "type": "audio/wav" });
+	save = (filename = "roundme.wav") => this.getBlob().then(
+		blob => RecorderJS.forceDownload(blob, filename)
+	)
+
+	getBlob = () => {
+		return this.recorderPromise.then(
+			recorder => new Promise(
+				(resolve) => {
+					recorder.exportWAV(resolve);
+				}
+			)
+		);
+	}
 }

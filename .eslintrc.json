@@ -37,7 +37,7 @@
 				"avoidEscape": true
 			}
 		],
-		"quote-props": ["error", "always"],
-		"semi": ["error", "always"]
+		"quote-props": ["warn", "always"],
+		"semi": ["warn", "always"]
 	}
 }

@@ -34,6 +34,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ "extended": false }));
 app.use(cookieParser());
 app.use("/static/", express.static(path.join(__dirname, "..", "client")));
+app.use(
+	"/static/fonts/font-awesome",
+	express.static(
+		// Need to do this ugly resolve; using requre.resolve() doesn't seem to work,
+		// possibly because the font-awesome package contains no main entry or index.js,
+		// so Node treats it as not a package.
+		path.resolve(__dirname, "..", "node_modules", "font-awesome", "fonts"),
+		{
+			"fallthrough": false
+		}
+	)
+);
 
 app.use("/", routes);
 
